@@ -1,0 +1,112 @@
+/*
+UVa 1068. Air Conditioning Machinery
+This problem can be solved with a method known as Iterative Deeping.
+It consists of a backtracking with limited deep, that is initially
+launched with limit=1, then with limit=2, and so on. When we finally
+find a solution, we know the minimum distance to the closest solution
+is exactly the current limit.
+In this problem, we don’ t want solutions more than 6 steps away, so we
+won’ t set a limit greater than 6. If even with limit=6 the backtracking
+doesn’ t find a solution, it means that the solution doesn’ t exist, or it
+is more than 6 steps away, and in this case we must print " Impossible".
+*/
+#include <iostream>
+using namespace std;
+struct P {
+int x, y, z;
+P() {}
+P( int xx, int yy, int zz) : x(xx), y(yy), z(zz) {}
+void operator+=(P p) { x += p.x; y += p.y; z += p.z; }
+};
+const int INF = 1000000000;
+const P dir[] = { P(1, 0, 0), P(0, 1, 0), P(0, 0, 1), P(-1, 0, 0), P(0, -1, 0), P(0,
+0, -1) };
+int mat[30][30][30];
+int res, lim;
+P dest;
+istream& operator>>(istream& in, P& p) {
+in >> p.x >> p.y >> p.z;
+return in;
+}
+ostream& operator<<(ostream& out, const P& p) {
+out << " ( " << p.x << " , " << p.y << " , " << p.z << " ) " ;
+return out;
+}
+bool operator==( const P& a, const P& b) {
+return a.x == b.x and a.y == b.y and a.z == b.z;
+}P
+operator+( const P& a, const P& b) {
+return P(a.x + b.x, a.y + b.y, a.z + b.z);
+}P
+operator*( int t, const P& p) {
+return P(t*p.x, t*p.y, t*p.z);
+}
+bool vist( const P& p) {
+return mat[p.x][p.y][p.z];
+}
+void marca( const P& p) {
+mat[p.x][p.y][p.z] = 1;
+}
+void desmarca( const P& p) {
+mat[p.x][p.y][p.z] = 0;
+}
+bool back(P p, int d, int t) {
+if (p == dest) return true;
+if (t >= lim) return false;
+if (vist(p) or vist(p + dir[d])) return false;
+marca(p);
+marca(p + dir[d]);
+for ( int k = 0; k < 6; ++k) {
+if ((k - d)%3 == 0) continue;
+if (vist(p + dir[d] + dir[k]) or vist(p + dir[d] + 2*dir[k])) continue;
+marca(p + dir[d] + dir[k]);
+marca(p + dir[d] + 2*dir[k]);
+if (back(p + dir[d] + 3*dir[k], k, t + 1)) return true;
+desmarca(p + dir[d] + dir[k]);
+desmarca(p + dir[d] + 2*dir[k]);
+}
+if (not vist(p + 2*dir[d])) {
+marca(p + 2*dir[d]);
+for ( int k = 0; k < 6; ++k) {
+if ((k - d)%3 == 0) continue;
+if (vist(p + 2*dir[d] + dir[k])) continue;
+marca(p + 2*dir[d] + dir[k]);
+if (back(p + 2*dir[d] + 2*dir[k], k, t + 1)) return true;
+desmarca(p + 2*dir[d] + dir[k]);
+}
+desmarca(p + 2*dir[d]);
+}
+desmarca(p);
+desmarca(p + dir[d]);
+return false;
+}
+int main() {
+int cas = 1;
+int xmax, ymax, zmax;
+while (cin >> xmax >> ymax >> zmax and xmax > 0) {
+for ( int y = 0; y <= ymax + 1; ++y)
+for ( int z = 0; z <= zmax + 1; ++z)
+mat[0][y][z] = mat[xmax + 1][y][z] = 1;
+for ( int x = 0; x <= xmax + 1; ++x)
+for ( int z = 0; z <= zmax + 1; ++z)
+mat[x][0][z] = mat[x][ymax + 1][z] = 1;
+for ( int x = 0; x <= xmax + 1; ++x)
+for ( int y = 0; y <= ymax + 1; ++y)
+mat[x][y][0] = mat[x][y][zmax + 1] = 1;
+for ( int x = 1; x <= xmax; ++x)
+for ( int y = 1; y <= ymax; ++y)
+for ( int z = 1; z <= zmax; ++z)
+mat[x][y][z] = 0;
+P ini;
+string s1, s2;
+cin >> ini >> s1 >> dest >> s2;
+int d1 = (s1[0] == ’ +’ ? 0 : 3) + s1[1] - ’ x’ ;
+int d2 = (s2[0] == ’ +’ ? 0 : 3) + s2[1] - ’ x’ ;
+dest += dir[d2];
+lim = 1;
+while (lim <= 6 and not back(ini, d1, 0)) ++lim;
+cout << " Case " << cas++ << " : " ;
+if (lim <= 6) cout << lim << endl;
+else cout << " Impossible" << endl;
+}
+}
